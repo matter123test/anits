@@ -65,14 +65,13 @@ export class Animepahe {
     current_page = 1;
 
     async init() {
-        this.browser = await chromium.launch({ headless: true });
+        this.browser = await chromium.launch({ headless: false });
         this.context = await this.browser.newContext();
 
         // Preload the website
         const page = await this.context.newPage();
         await page.goto("https://animepahe.pw");
-        await page.waitForLoadState('domcontentloaded');
-        await page.waitForSelector('.main');
+        await page.waitForSelector('.episode-snapshot');
         await page.close();
     }
 
