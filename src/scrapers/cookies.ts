@@ -1,33 +1,22 @@
 import { readFile, writeFile } from "fs/promises";
-import { chromium, type Cookie } from "playwright";
+import puppeteer, { type Cookie } from "puppeteer";
 
 export class Cookies {
     private static async fetchCookies(): Promise<Cookie[]> {
-        const browser = await chromium.launch({
-            headless: true, args: [
-                "--disable-dev-shm-usage",
-                "--disable-gpu",
-                "--no-sandbox"
-            ]
-        });
+        const browser = await puppeteer.launch();
 
-        const context = await browser.newContext();
+        const page = await browser.newPage();
 
-        // Load the website
-        const page = await context.newPage();
         await page.goto("https://animepahe.pw");
         await page.waitForSelector('.episode-snapshot');
+
+        const cookies = await browser.cookies();
+
         await page.close();
-
-        const cookies = await context.cookies();
-
-        // Cleanup
-        await context.close();
         await browser.close();
 
         return cookies;
     }
-
 
     private static stringifyCookies(cookies: Cookie[]): string {
         return cookies
