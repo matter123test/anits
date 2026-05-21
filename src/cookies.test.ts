@@ -1,9 +1,9 @@
 import { chromium, type Cookie } from "playwright";
-import { describe, expect, it } from "vitest";
+// import { describe, expect, it } from "vitest";
 
 export async function FetchCookies(): Promise<Array<Cookie>> {
     const browser = await chromium.launch({
-        headless: false, args: [
+        headless: true, args: [
             "--disable-dev-shm-usage",
             "--disable-gpu",
             "--no-sandbox"

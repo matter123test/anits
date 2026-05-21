@@ -1,6 +1,5 @@
 import { isCancel, select, spinner, text } from '@clack/prompts';
 import { exec } from 'node:child_process';
-import { Animepahe } from './animepahe.js';
 import { AnimepaheScraper } from './api.js';
 
 

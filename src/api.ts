@@ -75,6 +75,7 @@ export class AnimepaheScraper implements AnimeScraper {
     readonly DEFAULT_COOKIES_PATH = 'cookies.json';
     private cookie!: string;
     private current_page = 1;
+    private changed_to_first_page = false;
 
     public async init() {
         if (await fileExists(this.DEFAULT_COOKIES_PATH)) {
@@ -126,7 +127,15 @@ export class AnimepaheScraper implements AnimeScraper {
 
         const response = await axios.get(url, this.getFakeHeaders())
 
-        return response.data;
+        const data = response.data;
+
+        if (!this.changed_to_first_page && data.last_page != this.current_page) {
+            this.current_page = data.last_page;
+            this.changed_to_first_page = true;
+            return await this.getEpisodes(animeSession);
+        }
+
+        return data;
     }
 
     async getStreamSources(animeSession: string, episodeSession: string): Promise<Array<EmbededSource>> {
