@@ -1,4 +1,4 @@
-import { access } from "fs/promises"; 7
+import { access } from "fs/promises";
 import { exec } from 'node:child_process';
 
 export async function fileExists(path: string): Promise<boolean> {
