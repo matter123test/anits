@@ -1,20 +1,19 @@
 import { isCancel, select, spinner, text } from '@clack/prompts';
 
-import { AnimepaheScraper } from './api.js';
+import { Animepahe } from './scrapers/animepahe.js';
 import { openUrl } from './utils.js';
 
 
 async function main() {
     const s = spinner();
 
-    const api = new AnimepaheScraper();
+    const api = new Animepahe();
     s.start("Starting api...");
     await api.init();
     s.stop("Started api");
 
     const checkIfCancel = async (input: any) => {
         if (isCancel(input)) {
-            await api.close();
             return process.exit(0);
         }
     };
@@ -83,6 +82,7 @@ async function main() {
         }
     }
 
+    // Fetch episode streams
     s.start("Fetching url...");
     const sources = await api.getStreamSources(animeSession.toString(), episodeSession.toString());
     s.stop("Fetched urls");
@@ -102,8 +102,6 @@ async function main() {
     const url = source.toString();
     console.log(`Selected url ${url}`);
     openUrl(url);
-
-    await api.close();
 }
 
 main().catch(console.error);
