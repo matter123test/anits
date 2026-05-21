@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "start": "npm run build && node dist/index.js"
+    "start": "npm run build && node dist/index.js",
+    "test": "npx vitest"
   },
   "keywords": [],
   "author": "",
@@ -14,8 +15,10 @@
   "dependencies": {
     "@clack/prompts": "^1.4.0",
     "@types/node": "^25.9.1",
+    "axios": "^1.16.1",
     "cheerio": "^1.2.0",
-    "playwright": "^1.60.0"
+    "playwright": "^1.60.0",
+    "vitest": "^4.1.7"
   },
   "devDependencies": {
     "typescript": "^6.0.3"

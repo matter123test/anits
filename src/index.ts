@@ -1,6 +1,7 @@
-import { select, spinner, text } from '@clack/prompts';
+import { isCancel, select, spinner, text } from '@clack/prompts';
 import { exec } from 'node:child_process';
 import { Animepahe } from './animepahe.js';
+import { AnimepaheScraper } from './api.js';
 
 
 function openUrl(url: string) {
@@ -16,29 +17,45 @@ function openUrl(url: string) {
 async function main() {
     const s = spinner();
 
-    const api = new Animepahe();
+    const api = new AnimepaheScraper();
     s.start("Starting api...");
     await api.init();
     s.stop("Started api");
 
-    // var data = await api.getAnime("jojo");
-    // const session = data.data.at(0)?.session;
-    // let other = await api.getEpisodes(session!);
-    // console.log(other);
+    const checkIfCancel = async (input: any) => {
+        if (isCancel(input)) {
+            await api.close();
+            return process.exit(0);
+        }
+    };
 
     // Search anime
     const animeSearch = await text({
         message: "Search anime: "
     });
 
+    checkIfCancel(animeSearch);
+
     s.start("Searching anime...");
-    const animeResults = await api.getAnime(animeSearch.toString());
+    let animeResults;
+    while (true) {
+        try {
+            animeResults = await api.getAnime(animeSearch.toString());
+            break;
+        } catch (error) {
+            s.message("Refreshing cookies...");
+            await api.refreshCookies();
+        }
+    }
     s.stop("Done searching anime");
 
     const animeSession = await select<string>({
         message: "Select anime",
         options: animeResults.data.map((anime) => ({ value: anime.session, label: anime.title }))
     });
+
+    checkIfCancel(animeSession);
+
 
     // Select episode
     let episodeSession;
@@ -63,6 +80,8 @@ async function main() {
             options: episodesOptions
         })
 
+        checkIfCancel(episodeSession);
+
         if (episodeSession == "next_page") {
             api.nextPage();
         }
@@ -75,7 +94,7 @@ async function main() {
     }
 
     s.start("Fetching url...");
-    const sources = await api.getEmbededSources(animeSession.toString(), episodeSession.toString());
+    const sources = await api.getStreamSources(animeSession.toString(), episodeSession.toString());
     s.stop("Fetched urls");
 
     const source = await select<string>({
@@ -88,6 +107,7 @@ async function main() {
             }))
     });
 
+    checkIfCancel(source);
 
     const url = source.toString();
     console.log(`Selected url ${url}`);

@@ -1,5 +1,6 @@
 import { type Browser, type BrowserContext, chromium } from 'playwright';
 import * as cheerio from "cheerio";
+import { writeFile } from 'fs/promises';
 
 interface AnimeSearchResponse {
     total: number;
@@ -51,7 +52,7 @@ interface EpisodesFetchResponse {
 }
 
 interface EmbededSource {
-    text?: string | undefined ;
+    text?: string | undefined;
     src?: string | undefined;
     fansub?: string | undefined;
     resolution?: string | undefined;
@@ -63,9 +64,17 @@ export class Animepahe {
     context!: BrowserContext;
 
     current_page = 1;
+    changed_to_last_page = false;
 
     async init() {
-        this.browser = await chromium.launch({ headless: false });
+        this.browser = await chromium.launch({
+            headless: false, args: [
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--no-sandbox"
+            ]
+        });
+
         this.context = await this.browser.newContext();
 
         // Preload the website
@@ -73,6 +82,10 @@ export class Animepahe {
         await page.goto("https://animepahe.pw");
         await page.waitForSelector('.episode-snapshot');
         await page.close();
+
+        const cookies = await this.context.cookies();
+        console.log(cookies);
+        // await writeFile("out.json", JSON.stringify(cookies));
     }
 
     async close() {
@@ -108,7 +121,13 @@ export class Animepahe {
             throw new Error(`Failed to fetch episodes, with response: ${res.status()}`);
         }
 
-        const data = await res.json();
+        const data: EpisodesFetchResponse = await res.json();
+
+        if (!this.changed_to_last_page && data.last_page != this.current_page) {
+            this.current_page = data.last_page;
+            this.changed_to_last_page = true;
+            return await this.getEpisodes(animeSession);
+        }
 
         return data;
     }
