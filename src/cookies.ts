@@ -1,5 +1,4 @@
 import { chromium, type Cookie } from "playwright";
-// import { describe, expect, it } from "vitest";
 
 export async function FetchCookies(): Promise<Array<Cookie>> {
     const browser = await chromium.launch({
@@ -32,10 +31,3 @@ export function StringifyCookies(cookies: Cookie[]): string {
         .map((cookie) => `${cookie.name}=${cookie.value}`)
         .join('; ');
 }
-
-// describe("fetch cookies",
-//     () => {
-//         it("return cookies", async () => {
-//         })
-//     }
-// )

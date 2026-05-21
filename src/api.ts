@@ -1,5 +1,5 @@
 import { access, readFile, writeFile } from "fs/promises";
-import { FetchCookies, StringifyCookies } from "./cookies.test.js";
+import { FetchCookies, StringifyCookies } from "./cookies.js";
 import type { Cookie } from "playwright";
 import * as cheerio from "cheerio";
 

@@ -1,17 +1,8 @@
 import { isCancel, select, spinner, text } from '@clack/prompts';
-import { exec } from 'node:child_process';
+
 import { AnimepaheScraper } from './api.js';
+import { openUrl } from './utils.js';
 
-
-function openUrl(url: string) {
-    const cmd = process.platform === "win32"
-        ? `start "" "${url}"`
-        : process.platform === "darwin"
-            ? `open "${url}"`
-            : `xdg-open "${url}"`;
-
-    exec(cmd);
-}
 
 async function main() {
     const s = spinner();
