@@ -23,5 +23,5 @@ npx playwright install
 ```
 
 ```
-npm start
+bun start
 ```

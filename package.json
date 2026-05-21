@@ -1,25 +1,21 @@
 {
-  "name": "anits",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "build": "tsc",
-    "start": "npm run build && node dist/index.js",
-    "test": "npx vitest"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "name": "anitss",
+  "module": "index.ts",
   "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^6"
+  },
+  "scripts": {
+    "start": "bun run src/index.ts"
+  },
   "dependencies": {
     "@clack/prompts": "^1.4.0",
-    "@types/node": "^25.9.1",
     "axios": "^1.16.1",
     "cheerio": "^1.2.0",
     "puppeteer": "^25.0.4"
-  },
-  "devDependencies": {
-    "typescript": "^6.0.3"
   }
 }
