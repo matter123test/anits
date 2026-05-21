@@ -1,57 +1,46 @@
-import { isCancel, select, spinner, text } from '@clack/prompts';
+import { isCancel, log, select, spinner, text, type SpinnerResult } from '@clack/prompts';
 
 import { Animepahe } from './scrapers/animepahe.js';
 import { openUrl } from './utils.js';
 
 
-async function main() {
-    const s = spinner();
-
-    const api = new Animepahe();
-    s.start("Starting api...");
-    await api.init();
-    s.stop("Started api");
-
-    const checkIfCancel = async (input: any) => {
-        if (isCancel(input)) {
-            return process.exit(0);
-        }
-    };
-
-    // Search anime
-    const animeSearch = await text({
-        message: "Search anime: "
-    });
-
-    checkIfCancel(animeSearch);
-
-    s.start("Searching anime...");
-    let animeResults;
-    while (true) {
-        try {
-            animeResults = await api.getAnime(animeSearch.toString());
-            break;
-        } catch (error) {
-            s.message("Refreshing cookies...");
-            await api.refreshCookies();
-        }
+function checkIfCancel(input: unknown) {
+    if (isCancel(input)) {
+        return process.exit(0);
     }
-    s.stop("Done searching anime");
+}
 
-    const animeSession = await select<string>({
-        message: "Select anime",
-        options: animeResults.data.map((anime) => ({ value: anime.session, label: anime.title }))
-    });
+async function retryFunc<T>(main: () => Promise<T>, or: () => Promise<void>, maxTries = 4) {
+    let current = 0;
+    let lastError: unknown;
 
-    checkIfCancel(animeSession);
+    while (current < maxTries) {
+        try {
+            return await main();
+        }
+        catch (error) {
+            lastError = error;
+            await or();
+        }
+        current++;
+    }
 
+    throw lastError;
+}
 
-    // Select episode
+async function getEpisodeSession(api: Animepahe, animeSession: string, s: SpinnerResult) {
     let episodeSession;
+
     while (true) {
         s.start("Fetching episodes...");
-        const episodeResults = await api.getEpisodes(animeSession.toString());
+        const episodeResults = await retryFunc(
+            () => api.getEpisodes(animeSession.toString()),
+            async () => {
+                s.message("Retrying...");
+            }
+        );
         s.stop("Fetched episodes");
+
 
         let episodesOptions = episodeResults.data.map(
             (ep) => ({ value: ep.session, label: ep.episode.toString() })
@@ -82,10 +71,56 @@ async function main() {
         }
     }
 
+    return episodeSession;
+}
+
+async function main() {
+    const s = spinner();
+
+    const api = new Animepahe();
+    s.start("Starting api...");
+    await api.init();
+    s.stop("Started api");
+
+    // Search anime
+    const animeSearch = await text({
+        message: "Search anime: "
+    });
+
+    checkIfCancel(animeSearch);
+
+
+    s.start("Searching anime...");
+    let animeResults = await retryFunc(
+        () => api.getAnime(animeSearch.toString()),
+        async () => {
+            s.message("Refreshing cookies...");
+            await api.refreshCookies();
+        }
+    );
+    s.stop("Done searching anime");
+
+
+    const animeSession = await select<string>({
+        message: "Select anime",
+        options: animeResults.data.map((anime) => ({ value: anime.session, label: anime.title }))
+    });
+
+    checkIfCancel(animeSession);
+
+    // Select episode
+    let episodeSession = await getEpisodeSession(api, animeSession.toString(), s);
+
     // Fetch episode streams
     s.start("Fetching url...");
-    const sources = await api.getStreamSources(animeSession.toString(), episodeSession.toString());
+    const sources = await retryFunc(
+        () => api.getStreamSources(animeSession.toString(), episodeSession.toString()),
+        async () => {
+            s.message("Retrying...");
+        }
+    );
     s.stop("Fetched urls");
+
 
     const source = await select<string>({
         message: "Select source",
