@@ -4,6 +4,12 @@
 
 This is a simple cli that allows you to watch episodes via animepahe
 
+### Requirements
+
+- **git**
+- **Node.js** → includes `npm`
+- **mpv media player** https://mpv.io/
+
 ### Installation
 
 ```
@@ -23,5 +29,5 @@ npx playwright install
 ```
 
 ```
-bun start
+npm start
 ```

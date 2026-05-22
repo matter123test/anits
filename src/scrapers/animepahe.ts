@@ -1,9 +1,10 @@
-import { fileExists } from "../utils.js";
+import { fileExists } from "../utils/utils.js";
 import type { AnimeScraper } from "./scraper.js";
 import type { AnimeFetchResponse, EpisodesFetchResponse, StreamSource } from "./responses.js";
 import axios from "axios";
 import { Cookies as CookiesManager } from "./cookies.js";
 import * as cheerio from "cheerio";
+import { log } from "@clack/prompts";
 
 
 class Globals {
@@ -28,9 +29,14 @@ export class Animepahe implements AnimeScraper {
     private current_page = 1;
     private changed_to_first_page = false;
 
+    public getCookiesStr() {
+        return this.cookies_str;
+    }
+
     public async init() {
         if (await fileExists(this.DEFAULT_COOKIES_PATH)) {
             this.cookies_str = await CookiesManager.getCookiesStringFromPath(this.DEFAULT_COOKIES_PATH);
+            log.message(`Loaded ${this.DEFAULT_COOKIES_PATH}`);
         }
     }
 

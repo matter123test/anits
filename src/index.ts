@@ -1,8 +1,9 @@
 import { isCancel, log, select, spinner, text, type SpinnerResult } from '@clack/prompts';
 
 import { Animepahe } from './scrapers/animepahe.js';
-import { openUrl } from './utils.js';
-
+import { buildMPVCommand, openUrl } from './utils/utils.js';
+import { getKwikStreamUrl } from './utils/kwik.js';
+import { exec } from 'node:child_process';
 
 function checkIfCancel(input: unknown) {
     if (isCancel(input)) {
@@ -75,6 +76,8 @@ async function getEpisodeSession(api: Animepahe, animeSession: string, s: Spinne
 }
 
 async function main() {
+    console.clear();
+
     const s = spinner();
 
     const api = new Animepahe();
@@ -135,8 +138,17 @@ async function main() {
     checkIfCancel(source);
 
     const url = source.toString();
-    console.log(`Selected url ${url}`);
-    openUrl(url);
+    const stream = await getKwikStreamUrl(url);
+    console.log(`Embeded video url: ${url}`);
+    console.log(`Video source: ${stream}`);
+
+    const command = buildMPVCommand(stream);
+    exec(command);
 }
 
-main().catch(console.error);
+main().catch(
+    (error) => {
+        console.log(error);
+        process.exit(1);
+    }
+);
