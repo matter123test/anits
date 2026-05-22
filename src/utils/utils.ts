@@ -21,9 +21,13 @@ export function openUrl(url: string) {
     exec(cmd);
 }
 
-export function runMPV(url: string) {
+export function runMPV(url: string, title: string, episode: string) {
     const headers = "Referer: https://kwik.cx/, User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36, Accept: */*";
-    const mpv = spawn('mpv', [url, `--http-header-fields=${headers}`]);
+
+    const mpv = spawn('mpv', [
+        `--title=${title} - ${episode}`,
+        url, `--http-header-fields=${headers}`,
+    ]);
 
     mpv.stdout.on('data', (data) => {
         console.log(`${data}`);

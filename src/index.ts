@@ -27,52 +27,6 @@ async function retryFunc<T>(main: () => Promise<T>, or: () => Promise<void>, max
     throw lastError;
 }
 
-async function getEpisodeSession(api: Animepahe, animeSession: string, s: SpinnerResult) {
-    let episodeSession;
-
-    while (true) {
-        s.start("Fetching episodes...");
-        const episodeResults = await retryFunc(
-            () => api.getEpisodes(animeSession.toString()),
-            async () => {
-                s.message("Retrying...");
-            }
-        );
-        s.stop("Fetched episodes");
-
-
-        let episodesOptions = episodeResults.data.map(
-            (ep) => ({ value: ep.session, label: ep.episode.toString() })
-        ).reverse();
-
-        if (episodeResults.next_page_url) {
-            episodesOptions.push({ value: "next_page", label: "<-- BACK PAGE" });
-        }
-        if (episodeResults.prev_page_url) {
-            episodesOptions.push({ value: "back_page", label: "NEXT PAGE -->" });
-        }
-
-        episodeSession = await select<string>({
-            message: "Select episode",
-            options: episodesOptions
-        })
-
-        checkIfCancel(episodeSession);
-
-        if (episodeSession == "next_page") {
-            api.nextPage();
-        }
-        else if (episodeSession == "back_page") {
-            api.backPage();
-        }
-        else {
-            break;
-        }
-    }
-
-    return episodeSession;
-}
-
 async function main() {
     console.clear();
 
@@ -90,7 +44,6 @@ async function main() {
 
     checkIfCancel(animeSearch);
 
-
     s.start("Searching anime...");
     let animeResults = await retryFunc(
         () => api.getAnime(animeSearch.toString()),
@@ -101,16 +54,60 @@ async function main() {
     );
     s.stop("Done searching anime");
 
-
-    const animeSession = await select<string>({
+    // Select anime
+    const animeSession = (await select<string>({
         message: "Select anime",
         options: animeResults.data.map((anime) => ({ value: anime.session, label: anime.title }))
-    });
+    })).toString();
 
     checkIfCancel(animeSession);
 
-    // Select episode
-    let episodeSession = await getEpisodeSession(api, animeSession.toString(), s);
+    // Fetch episodes and select
+    let episodeSession: string;
+    let episodeTitle: string | undefined;
+
+    while (true) {
+        s.start("Fetching episodes...");
+        const episodesData = await retryFunc(
+            () => api.getEpisodes(animeSession),
+            async () => {
+                s.message("Retrying...");
+            }
+        );
+        s.stop("Fetched episodes");
+
+
+        let episodesOptions = episodesData.data.map(
+            (ep) => ({ value: ep.session, label: ep.episode.toString() })
+        ).reverse();
+
+        if (episodesData.next_page_url) {
+            episodesOptions.push({ value: "next_page", label: "<-- BACK PAGE" });
+        }
+        if (episodesData.prev_page_url) {
+            episodesOptions.push({ value: "back_page", label: "NEXT PAGE -->" });
+        }
+
+        episodeSession = (await select<string>({
+            message: "Select episode",
+            options: episodesOptions
+        })).toString();
+
+        episodeTitle = episodesData.data.find((ep) => ep.session == episodeSession)?.episode.toString();
+
+        checkIfCancel(episodeSession);
+
+        if (episodeSession == "next_page") {
+            api.nextPage();
+        }
+        else if (episodeSession == "back_page") {
+            api.backPage();
+        }
+        else {
+            break;
+        }
+    }
+
 
     // Fetch episode streams
     s.start("Fetching url...");
@@ -141,8 +138,12 @@ async function main() {
     console.log(`Embeded video url: ${url}`);
     console.log(`Video source: ${stream}`);
 
+
+    // Get anime info    
+    const animeTitle = animeResults.data.find((anime) => anime.session == animeSession)?.title;
+
     if (stream) {
-        runMPV(stream);
+        runMPV(stream, animeTitle!, episodeTitle!);
     }
     else {
         log.message("Stream not found");
