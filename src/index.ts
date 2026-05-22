@@ -1,9 +1,7 @@
 import { isCancel, log, select, spinner, text, type SpinnerResult } from '@clack/prompts';
-
 import { Animepahe } from './scrapers/animepahe.js';
-import { buildMPVCommand, openUrl } from './utils/utils.js';
+import { runMPV } from './utils/utils.js';
 import { getKwikStreamUrl } from './utils/kwik.js';
-import { exec } from 'node:child_process';
 
 function checkIfCancel(input: unknown) {
     if (isCancel(input)) {
@@ -139,11 +137,16 @@ async function main() {
 
     const url = source.toString();
     const stream = await getKwikStreamUrl(url);
+
     console.log(`Embeded video url: ${url}`);
     console.log(`Video source: ${stream}`);
 
-    const command = buildMPVCommand(stream);
-    exec(command);
+    if (stream) {
+        runMPV(stream);
+    }
+    else {
+        log.message("Stream not found");
+    }
 }
 
 main().catch(
