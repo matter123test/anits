@@ -25,7 +25,7 @@ npm install
 ```
 
 ```
-npx playwright install
+npx puppeteer browsers install chrome
 ```
 
 ```
