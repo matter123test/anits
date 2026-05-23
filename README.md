@@ -29,5 +29,9 @@ npx puppeteer browsers install chrome
 ```
 
 ```
+npm run build
+```
+
+```
 npm start
 ```
